@@ -1948,7 +1948,7 @@ class WhisperTimeStampLogitsProcessor(LogitsProcessor):
     def __init__(
         self,
         generate_config: "GenerationConfig",
-        begin_index: int,
+        begin_index: Optional[int] = None,
         _detect_timestamp_from_logprob: Optional[bool] = None,
     ):  # support for the kwargs
         self.no_timestamps_token_id = generate_config.no_timestamps_token_id
@@ -1961,13 +1961,10 @@ class WhisperTimeStampLogitsProcessor(LogitsProcessor):
             if _detect_timestamp_from_logprob is not None
             else getattr(generate_config, "_detect_timestamp_from_logprob", True)
         )
-        self.begin_index = begin_index
-        if begin_index is None:
-            raise ValueError(
-                "`forced_decoder_ids` is deprecated in favor of `task` and `language` and, as such, `begin_index` "
-                "must be provided to `WhisperTimeStampLogitsProcessor`. The previous default value of `begin_index` "
-                "was `len(generate_config.forced_decoder_ids)`"
-            )
+        num_forced_ids = (
+            len(generate_config.forced_decoder_ids) if generate_config.forced_decoder_ids is not None else 0
+        )
+        self.begin_index = begin_index or (num_forced_ids + 1)
 
         self.max_initial_timestamp_index = getattr(generate_config, "max_initial_timestamp_index", None)
         # TODO(Patrick): Make sure that official models have max_initial_timestamp_index set to 50
